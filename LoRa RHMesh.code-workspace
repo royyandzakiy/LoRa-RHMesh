@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "/home/pi/Royyan/Project Coding/IoT/2020-Jan/Nootropic Design/lora-mesh/LoRaMesh"
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}
