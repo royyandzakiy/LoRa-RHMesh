@@ -34,7 +34,7 @@ uint8_t data[] = "Hello World!";
 uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     
     if (!manager.init()) {
         Serial.println(F("init failed"));

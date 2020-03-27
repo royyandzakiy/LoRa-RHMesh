@@ -26,20 +26,17 @@
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 // Class to manage message delivery and receipt, using the driver declared above
-RHMesh *manager;
+RHMesh manager(rf95, CLIENT_ADDRESS);
 
-// message buffer
-uint8_t data[] = "And hello back to you from server2";
+
+uint8_t data[] = "Hello World!";
 // Dont put this on the stack:
 uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];
 
-void setup() 
-{
-    Serial.begin(9600);
+void setup() {
+    Serial.begin(115200);
     
-    manager = new RHMesh(rf95, SERVER2_ADDRESS);
-
-    if (!manager->init()) {
+    if (!manager.init()) {
         Serial.println(F("init failed"));
     } else {
         Serial.println("done");
@@ -47,22 +44,33 @@ void setup()
     
     rf95.setTxPower(23, false);
     rf95.setFrequency(RF95_FREQ);
-    rf95.setCADTimeout(500);    
+    rf95.setCADTimeout(500);
 }
 
-void loop()
+void loop() 
 {
-  uint8_t len = sizeof(buf);
-  uint8_t from;
-  if (manager->recvfromAck(buf, &len, &from))
+  Serial.println("Sending to manager_mesh_server2");
+    
+  // Send a message to a rf95_mesh_server
+  // A route to the destination will be automatically discovered.
+  if (manager.sendtoWait(data, sizeof(data), SERVER2_ADDRESS) == RH_ROUTER_ERROR_NONE)
   {
-    Serial.print("got request from : 0x");
-    Serial.print(from, HEX);
-    Serial.print(": ");
-    Serial.println((char*)buf);
-
-    // Send a reply back to the originator client
-    if (manager->sendtoWait(data, sizeof(data), from) != RH_ROUTER_ERROR_NONE)
-      Serial.println("sendtoWait failed");
+    // It has been reliably delivered to the next node.
+    // Now wait for a reply from the ultimate server
+    uint8_t len = sizeof(buf);
+    uint8_t from;    
+    if (manager.recvfromAckTimeout(buf, &len, 3000, &from))
+    {
+      Serial.print("got reply from : 0x");
+      Serial.print(from, HEX);
+      Serial.print(": ");
+      Serial.println((char*)buf);
+    }
+    else
+    {
+      Serial.println("No reply, is rf95_mesh_server1, rf95_mesh_server2 and rf95_mesh_server3 running?");
+    }
   }
+  else
+     Serial.println("sendtoWait failed. Are the intermediate mesh servers running?");
 }

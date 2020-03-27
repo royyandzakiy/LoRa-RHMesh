@@ -35,7 +35,7 @@ uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];
 
 void setup() 
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
     
     manager = new RHMesh(rf95, SERVER2_ADDRESS);
 
