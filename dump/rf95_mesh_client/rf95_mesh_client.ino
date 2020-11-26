@@ -1,6 +1,9 @@
 #include <SPI.h>
 #include <RHMesh.h>
 #include <RH_RF95.h>
+#include <EEPROM.h>
+
+#define EEPROM_SIZE 1 // ESP32 max 512, Arduino Uno max 1024
 
 /*// Arduino
 #define RFM95_CS 10
@@ -15,62 +18,109 @@
 // Change to 434.0 or other frequency, must match RX's freq!
 #define RF95_FREQ 915.0
 
-// Mesh
-// In this small artifical network of 4 nodes,
-#define CLIENT_ADDRESS 1
-#define SERVER1_ADDRESS 2
-#define SERVER2_ADDRESS 3
-#define SERVER3_ADDRESS 4
- 
+int nodeIdSelf;
+int nodeIdDestination = 4;
+int startTimer;
+
 // Singleton instance of the radio driver
-RH_RF95 rf95(RFM95_CS, RFM95_INT);
+RH_RF95 driver(RFM95_CS, RFM95_INT);
 
 // Class to manage message delivery and receipt, using the driver declared above
-RHMesh manager(rf95, CLIENT_ADDRESS);
+RHMesh *manager;
 
+String message;
+String messageResponse = "Alert Received!";
 
-uint8_t data[] = "Hello World!";
-// Dont put this on the stack:
+// ----------------------
+// SETUP
+// === LoRa
+void setup_lora() {
+  driver.setTxPower(23, false);
+  driver.setFrequency(RF95_FREQ);
+  driver.setCADTimeout(500);
+
+  EEPROM.begin(EEPROM_SIZE); // gunakan untuk ESP32
+  nodeIdSelf = EEPROM.read(0);
+
+  manager = new RHMesh(driver, nodeIdSelf);
+  
+  if (!manager->init()) {
+      Serial.println(F("init failed"));
+  } else {
+      Serial.println("Mesh Node \"" + (String) nodeIdSelf + "\" Up and Running!");
+  }
+}
+
+// ----------------------
+// ACTIONS
+// === LoRa
 uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];
+
+void sendMessage(String _message, int _nodeIdDestination, int _sendMessageCount) {
+  for (int i=0; i<_sendMessageCount; i++) {
+    Serial.println("Sending to RF95 Mesh Node \"" + (String) _nodeIdDestination + "\"!");
+    // Send a message to a rf95_mesh_node
+    // A route to the destination will be automatically discovered.
+
+    char messageChar[_message.length() + 1];
+    strcpy(messageChar, _message.c_str());
+    
+    int errorLog = manager->sendtoWait((uint8_t*) messageChar, sizeof(messageChar), nodeIdDestination);
+    if (errorLog == RH_ROUTER_ERROR_NONE)
+    {
+      // It has been reliably delivered to the next node.
+      // Now wait for a reply from the ultimate server
+      uint8_t len = sizeof(buf);
+      uint8_t from;    
+      if (manager->recvfromAckTimeout(buf, &len, 3000, &from))
+      {
+        Serial.print("Got Reply from ");
+        Serial.print(from, HEX);
+        Serial.println(":");
+        Serial.println((char*)buf);}
+      else
+      {
+        Serial.println("No reply, is rf95_mesh_node1, rf95_mesh_node2 and rf95_mesh_node3 running?");
+      }
+    }
+    else
+       Serial.println("sendtoWait failed. Are the intermediate mesh nodes running?");
+  }
+}
+
+void listen_lora() {
+  uint8_t len = sizeof(buf);
+  uint8_t nodeIdFrom;
+
+  if (manager->recvfromAck(buf, &len, &nodeIdFrom))
+  {
+    Serial.print("Got Message nodeIdFrom ");
+    Serial.print(nodeIdFrom, HEX);
+    Serial.println(":");
+    Serial.println((char*)buf);
+
+    Serial.println("lastRssi = " + (String) driver.lastRssi());
+    
+    // Send a reply back to the originator client
+    char messageResponseChar[messageResponse.length() + 1];
+    strcpy(messageResponseChar, messageResponse.c_str());
+    if (manager->sendtoWait((uint8_t*) messageResponseChar, sizeof(messageResponseChar), nodeIdFrom) != RH_ROUTER_ERROR_NONE)
+      Serial.println("sendtoWait failed");
+  }
+}
 
 void setup() {
     Serial.begin(9600);
-    
-    if (!manager.init()) {
-        Serial.println(F("init failed"));
-    } else {
-        Serial.println("done");
-    }
-    
-    rf95.setTxPower(23, false);
-    rf95.setFrequency(RF95_FREQ);
-    rf95.setCADTimeout(500);
+    setup_lora();
+    startTimer = millis();
+    message = "Hello! from node " + (String) nodeIdSelf + ", to node " + (String) nodeIdDestination;
 }
 
 void loop() 
 {
-  Serial.println("Sending to manager_mesh_server2");
-    
-  // Send a message to a rf95_mesh_server
-  // A route to the destination will be automatically discovered.
-  if (manager.sendtoWait(data, sizeof(data), SERVER2_ADDRESS) == RH_ROUTER_ERROR_NONE)
-  {
-    // It has been reliably delivered to the next node.
-    // Now wait for a reply from the ultimate server
-    uint8_t len = sizeof(buf);
-    uint8_t from;    
-    if (manager.recvfromAckTimeout(buf, &len, 3000, &from))
-    {
-      Serial.print("got reply from : 0x");
-      Serial.print(from, HEX);
-      Serial.print(": ");
-      Serial.println((char*)buf);
-    }
-    else
-    {
-      Serial.println("No reply, is rf95_mesh_server1, rf95_mesh_server2 and rf95_mesh_server3 running?");
-    }
+  if (millis() - startTimer > 1000) {
+    startTimer = millis();
+    sendMessage(message, nodeIdDestination, 1);
   }
-  else
-     Serial.println("sendtoWait failed. Are the intermediate mesh servers running?");
+  listen_lora();  
 }

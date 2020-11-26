@@ -2,12 +2,17 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "/home/pi/Royyan/Project Coding/IoT/2020-Jan/Nootropic Design/lora-mesh/LoRaMesh"
 		}
 	],
 	"settings": {
-		"git.ignoreLimitWarning": true
+		"git.ignoreLimitWarning": true,
+		"files.associations": {
+			"*.tcc": "cpp",
+			"fstream": "cpp",
+			"iomanip": "cpp",
+			"istream": "cpp",
+			"ostream": "cpp",
+			"hello inventor.C": "cpp"
+		}
 	}
 }
