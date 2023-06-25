@@ -21,22 +21,26 @@
 #define SERVER1_ADDRESS 2
 #define SERVER2_ADDRESS 3
 #define SERVER3_ADDRESS 4
- 
+
+#ifndef NODE_ID
+  #define NODE_ID CLIENT_ADDRESS
+#endif // NODE_ID
+#define NODE_ID_TARGET SERVER2_ADDRESS
+
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 
 // Class to manage message delivery and receipt, using the driver declared above
-RHMesh manager(rf95, CLIENT_ADDRESS);
+RHMesh loraMeshManager(rf95, NODE_ID);
 
-
-uint8_t data[] = "Hello World!";
+uint8_t loraMsg[] = "Hello World!";
 // Dont put this on the stack:
-uint8_t buf[RH_MESH_MAX_MESSAGE_LEN];
+uint8_t loraMsgBuf[RH_MESH_MAX_MESSAGE_LEN]; // around 220 bytes/characters is safe
 
 void setup() {
     Serial.begin(115200);
     
-    if (!manager.init()) {
+    if (!loraMeshManager.init()) {
         Serial.println(F("init failed"));
     } else {
         Serial.println("done");
@@ -49,22 +53,22 @@ void setup() {
 
 void loop() 
 {
-  Serial.println("Sending to manager_mesh_server2");
+  Serial.println("Sending to loraMeshManager_mesh_server2");
     
   // Send a message to a rf95_mesh_server
   // A route to the destination will be automatically discovered.
-  if (manager.sendtoWait(data, sizeof(data), SERVER2_ADDRESS) == RH_ROUTER_ERROR_NONE)
+  if (loraMeshManager.sendtoWait(loraMsg, sizeof(loraMsg), NODE_ID_TARGET) == RH_ROUTER_ERROR_NONE)
   {
     // It has been reliably delivered to the next node.
     // Now wait for a reply from the ultimate server
-    uint8_t len = sizeof(buf);
-    uint8_t from;    
-    if (manager.recvfromAckTimeout(buf, &len, 3000, &from))
+    uint8_t loraMsgBufSize = sizeof(loraMsgBuf);
+    uint8_t nodeIdFrom;    
+    if (loraMeshManager.recvfromAckTimeout(loraMsgBuf, &loraMsgBufSize, 3000, &nodeIdFrom))
     {
       Serial.print("got reply from : 0x");
-      Serial.print(from, HEX);
+      Serial.print(nodeIdFrom, HEX);
       Serial.print(": ");
-      Serial.println((char*)buf);
+      Serial.println((char*)loraMsgBuf);
     }
     else
     {
