@@ -24,21 +24,21 @@
 #define RFM95_CS 5
 #define RFM95_RST 14
 #define RFM95_INT 2
+
 #define RF95_FREQ 915.0
 #define RH_MESH_MAX_MESSAGE_LEN 50
+
+#define SENDING_MODE 0
+#define RECEIVING_MODE 1
 
 // Topology
 #define NODE1_ADDRESS 1
 #define NODE2_ADDRESS 2
 #define NODE3_ADDRESS 3
-#define FINAL_ADDRESS 4
+#define FINAL_ADDRESS 254  // purposefully using the last namber
 
-#define SENDING_MODE 0
-#define RECEIVING_MODE 1
-
-// CHANGE THIS!!!
-const int selfAddress_ = NODE3_ADDRESS;
-const int targetAddress_ = FINAL_ADDRESS;
+const uint8_t selfAddress_ = NODE3_ADDRESS;  // CHANGE THIS!!!
+const uint8_t targetAddress_ = FINAL_ADDRESS;
 
 // radio driver & message mesh delivery/receipt manager
 RH_RF95 RFM95Modem_(RFM95_CS, RFM95_INT);
@@ -71,14 +71,15 @@ void loop() {
     // Send a message to another rhmesh node
     Serial.println("Sending to " + targetAddress_);
     if (RHMeshManager_.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]),
-                                 msgSend.size(),
-                                 targetAddress_) == RH_ROUTER_ERROR_NONE) {
+                                  msgSend.size(),
+                                  targetAddress_) == RH_ROUTER_ERROR_NONE) {
       // message successfully be sent to the target node, or next neighboring
       // expecting to recieve a simple reply from the target node
       if (RHMeshManager_.recvfromAckTimeout(
               _msgRcvBuf, (uint8_t *)sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
         msgRcv = std::string("got reply from : " + std::to_string(_msgFrom) +
                              ":" + reinterpret_cast<char *>(_msgRcvBuf));
+        Serial.printf("%s\n", msgRcv);
       } else {
         Serial.println("No reply, is the target node running?");
       }
@@ -96,16 +97,17 @@ void loop() {
     if (RHMeshManager_.recvfromAckTimeout(
             _msgRcvBuf, (uint8_t *)sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
       msgRcv = std::string("got msg from : " + std::to_string(_msgFrom) + ":" +
-                           reinterpret_cast<char *>(_msgRcvBuf));
-      Serial.printf("REPLYING to %d\n", _msgFrom);
+                           reinterpret_cast<char *>(_msgRcvBuf) +
+                           ". sending a reply...");
+      Serial.printf("%s\n", msgRcv);
 
-      std::string _msgRply("Hi %d, got the message!", _msgFrom);
+      std::string _msgRply("Hi node %d, got the message!", _msgFrom);
 
       if (RHMeshManager_.sendtoWait(reinterpret_cast<uint8_t *>(&_msgRply[0]),
-                                   _msgRply.size(),
-                                   _msgFrom) == RH_ROUTER_ERROR_NONE) {
-        // message successfully be replied back to the target node, or next
-        // neighboring do nothing...
+                                    _msgRply.size(),
+                                    _msgFrom) == RH_ROUTER_ERROR_NONE) {
+        // message successfully received by either final target node, or next
+        // neighboring node. do nothing...
       } else {
         Serial.println("No messages coming in...");
       }

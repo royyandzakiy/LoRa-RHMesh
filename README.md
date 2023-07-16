@@ -65,13 +65,13 @@ This example of 4 node topology, in which the FINAL_ADDRESS node is expected to 
 #define NODE1_ADDRESS 1
 #define NODE2_ADDRESS 2
 #define NODE3_ADDRESS 3
-#define FINAL_ADDRESS 4
+#define FINAL_ADDRESS 254 // purposefully using the last namber
 ```
 
 You can actively change the current nodes behaviour by changing this line. Make sure you change it for every different node!
 ```
-#define SELF_ADDRESS NODE3_ADDRESS
-#define TARGET_ADDRESS FINAL_ADDRESS
+const uint8_t selfAddress_ = NODE3_ADDRESS;
+const uint8_t targetAddress_ = FINAL_ADDRESS;
 ```
 
 <a name="forced-topology"></a>
