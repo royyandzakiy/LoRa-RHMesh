@@ -41,8 +41,8 @@
 #define TARGET_ADDRESS FINAL_ADDRESS
 
 // radio driver & message mesh delivery/receipt manager
-RH_RF95 RHDriver(RFM95_CS, RFM95_INT);
-RHMesh RHMeshManager(RHDriver, SELF_ADDRESS);
+RH_RF95 RFM95Modem(RFM95_CS, RFM95_INT);
+RHMesh RHMeshManager(RFM95Modem, SELF_ADDRESS);
 
 std::string msgSend = "Hello, from " + SELF_ADDRESS;
 std::string msgRcv;
@@ -81,7 +81,9 @@ void loop() {
         Serial.println("No reply, is the target node running?");
       }
     } else {
-      Serial.println("sendtoWait failed. No response from intermediary node, are they running?");
+      Serial.println(
+          "sendtoWait failed. No response from intermediary node, are they "
+          "running?");
     }
     _lastSend = millis();
     mode = RECEIVING_MODE;
@@ -93,15 +95,25 @@ void loop() {
             _msgRcvBuf, (uint8_t *)sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
       msgRcv = std::string("got msg from : " + std::to_string(_msgFrom) + ":" +
                            reinterpret_cast<char *>(_msgRcvBuf));
-    } else {
-      Serial.println("No messages coming in...");
+      Serial.printf("REPLYING to %d\n", _msgFrom);
+
+      std::string _msgRply("Hi %d, got the message!", _msgFrom);
+
+      if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&_msgRply[0]),
+                                   _msgRply.size(),
+                                   _msgFrom) == RH_ROUTER_ERROR_NONE) {
+        // message successfully be replied back to the target node, or next
+        // neighboring do nothing...
+      } else {
+        Serial.println("No messages coming in...");
+      }
     }
   }
 }
 
 void rhSetup() {
   if (!RHMeshManager.init()) Serial.println("init failed");
-  RHDriver.setTxPower(23, false);
-  RHDriver.setFrequency(RF95_FREQ);
-  RHDriver.setCADTimeout(500);
+  RFM95Modem.setTxPower(23, false);
+  RFM95Modem.setFrequency(RF95_FREQ);
+  RFM95Modem.setCADTimeout(500);
 }
