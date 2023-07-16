@@ -66,13 +66,10 @@ This example of a 4 node topology, in which the `FINAL_ADDRESS` node is expected
 #define NODE3_ADDRESS 3
 #define FINAL_ADDRESS 254 // purposefully using the last namber
 ```
-<details>
-<summary>topology image</summary>
-<img width="700" src="docs/topology-full.png">
-<br />
-<img width="700" src="docs/topology-route.png">
-</details>
 
+<img width="700" src="docs/topology-full.png">
+
+<img width="700" src="docs/topology-route.png">
 
 You can actively change the current nodes behaviour by changing this line. Make sure you change it for every different node!
 ```
