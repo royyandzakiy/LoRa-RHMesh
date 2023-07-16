@@ -39,6 +39,28 @@ if you have a different wiring scheme, don't forget to change these lines in mai
 #define RFM95_INT 2
 ```
 
+### Topology
+<img width="700" src="docs/topology-full.png">
+
+This example of a 4 node topology, in which the `FINAL_ADDRESS` node is expected to be the last node in the network, simulating a common topology in which this last node would act as a border node connected to the internet, collecting messages from other nodes during it's lifetime, then sending them to cloud. node 1-3 would collect sensor data then send to final node, and in the process node 1-3 could be an intermediary node for one another. Feel free to make a totally different addressing scheme.
+```
+#define NODE1_ADDRESS 1
+#define NODE2_ADDRESS 2
+#define NODE3_ADDRESS 3
+#define FINAL_ADDRESS 254 // purposefully using the last namber
+```
+
+You can actively change the current nodes behaviour by changing this line. Make sure you change it for every different node!
+```
+const uint8_t selfAddress_ = NODE3_ADDRESS;
+const uint8_t targetAddress_ = FINAL_ADDRESS;
+```
+
+<img width="700" src="docs/topology-route.png">
+
+after a route is discovered for a target node, it will be saved as a route entry of its routing table within that individual node. by saving the next direct node that is expected to be able connect it with the target node, even as intermediary. So in this example, node 2 only saves node 1 in it's route entry to connect with node final, not knowing whether node 1 is the only intermediary node, or might there be more. hence, node 1 is expected to have a route to connect with node final, in this example it will be a direct connection. node 2 does not have a direct route to node final, nor node 3
+
+
 ## Misc
 ### Configuring The LoRa Module
 Change to 915.0, 434.0 or other frequency, must match LoRa chip/RX's freq!
@@ -56,25 +78,6 @@ You can add specific LoRa modes for the RFM95 module by editting the `rhSetup()`
 RHDriver.setTxPower(23, false);
 RHDriver.setFrequency(RF95_FREQ);
 RHDriver.setCADTimeout(500);
-```
-
-### Topology
-<img width="700" src="docs/topology-full.png">
-
-<img width="700" src="docs/topology-route.png">
-
-This example of a 4 node topology, in which the `FINAL_ADDRESS` node is expected to be the last node in the network, simulating a common topology in which this last node would act as a border node connected to the internet, collecting messages from other nodes during it's lifetime, then sending them to cloud. node 1-3 would collect sensor data then send to final node, and in the process node 1-3 could be an intermediary node for one another. Feel free to make a totally different addressing scheme. after a route is discovered for a target node, it will be saved as a routing table within each individual node, by saving the next direct node that is expected to be able connect it with the target node.
-```
-#define NODE1_ADDRESS 1
-#define NODE2_ADDRESS 2
-#define NODE3_ADDRESS 3
-#define FINAL_ADDRESS 254 // purposefully using the last namber
-```
-
-You can actively change the current nodes behaviour by changing this line. Make sure you change it for every different node!
-```
-const uint8_t selfAddress_ = NODE3_ADDRESS;
-const uint8_t targetAddress_ = FINAL_ADDRESS;
 ```
 
 <a name="forced-topology"></a>
