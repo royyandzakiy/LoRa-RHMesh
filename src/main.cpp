@@ -54,14 +54,14 @@ void setup() {
   rhSetup();
 }
 
-long _lastSend = 0, _sendDuration = 0;
+long _lastSend = 0, _sendInterval = 10000; // send every 10 seconds
 uint8_t mode = SENDING_MODE;
 
 void loop() {
   uint8_t _msgFrom;
   uint8_t _msgRcvBuf[RH_MESH_MAX_MESSAGE_LEN];
 
-  if (millis() - _lastSend > _sendDuration) {
+  if (millis() - _lastSend > _sendInterval) {
     mode = SENDING_MODE;
   }
 
