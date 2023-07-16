@@ -31,6 +31,13 @@ DIO0   -------------- GPIO2
 3.3V   -------------- 3.3V
 GND    -------------- GND
 ```
+<details>
+<summary>Schematic</summary>
+<img src="docs/esp32-pinout.jpeg" width="700">
+<br/>
+<img src="docs/schematic.jpeg" width="500">
+
+</details>
 
 if you have a different wiring scheme, don't forget to change these lines in main.cpp
 ```
