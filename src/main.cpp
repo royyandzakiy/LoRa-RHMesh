@@ -41,9 +41,12 @@
 #define TARGET_ADDRESS FINAL_ADDRESS
 
 // radio driver & message mesh delivery/receipt manager
-RH_RF95 RFM95Modem(RFM95_CS, RFM95_INT);
-RHMesh RHMeshManager(RFM95Modem, SELF_ADDRESS);
+RH_RF95 RFM95Modem_(RFM95_CS, RFM95_INT);
+RHMesh RHMeshManager_(RFM95Modem_, SELF_ADDRESS);
+uint8_t mode_ = SENDING_MODE;
 
+// these are expected to be global/externally exposed variables, if you plan to
+// make a class to wrap this
 std::string msgSend = "Hello, from " + SELF_ADDRESS;
 std::string msgRcv;
 
@@ -54,26 +57,25 @@ void setup() {
   rhSetup();
 }
 
-long _lastSend = 0, _sendInterval = 10000; // send every 10 seconds
-uint8_t mode = SENDING_MODE;
+long _lastSend = 0, sendInterval_ = 10000;  // send every 10 seconds
 
 void loop() {
   uint8_t _msgFrom;
   uint8_t _msgRcvBuf[RH_MESH_MAX_MESSAGE_LEN];
 
-  if (millis() - _lastSend > _sendInterval) {
-    mode = SENDING_MODE;
+  if (millis() - _lastSend > sendInterval_) {
+    mode_ = SENDING_MODE;
   }
 
-  if (mode == SENDING_MODE) {
+  if (mode_ == SENDING_MODE) {
     // Send a message to another rhmesh node
     Serial.println("Sending to " + TARGET_ADDRESS);
-    if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]),
+    if (RHMeshManager_.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]),
                                  msgSend.size(),
                                  TARGET_ADDRESS) == RH_ROUTER_ERROR_NONE) {
       // message successfully be sent to the target node, or next neighboring
       // expecting to recieve a simple reply from the target node
-      if (RHMeshManager.recvfromAckTimeout(
+      if (RHMeshManager_.recvfromAckTimeout(
               _msgRcvBuf, (uint8_t *)sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
         msgRcv = std::string("got reply from : " + std::to_string(_msgFrom) +
                              ":" + reinterpret_cast<char *>(_msgRcvBuf));
@@ -86,12 +88,12 @@ void loop() {
           "running?");
     }
     _lastSend = millis();
-    mode = RECEIVING_MODE;
+    mode_ = RECEIVING_MODE;
   }
 
-  if (mode == RECEIVING_MODE) {
+  if (mode_ == RECEIVING_MODE) {
     // while at it, wait for a message from other nodes
-    if (RHMeshManager.recvfromAckTimeout(
+    if (RHMeshManager_.recvfromAckTimeout(
             _msgRcvBuf, (uint8_t *)sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
       msgRcv = std::string("got msg from : " + std::to_string(_msgFrom) + ":" +
                            reinterpret_cast<char *>(_msgRcvBuf));
@@ -99,7 +101,7 @@ void loop() {
 
       std::string _msgRply("Hi %d, got the message!", _msgFrom);
 
-      if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&_msgRply[0]),
+      if (RHMeshManager_.sendtoWait(reinterpret_cast<uint8_t *>(&_msgRply[0]),
                                    _msgRply.size(),
                                    _msgFrom) == RH_ROUTER_ERROR_NONE) {
         // message successfully be replied back to the target node, or next
@@ -112,8 +114,8 @@ void loop() {
 }
 
 void rhSetup() {
-  if (!RHMeshManager.init()) Serial.println("init failed");
-  RFM95Modem.setTxPower(23, false);
-  RFM95Modem.setFrequency(RF95_FREQ);
-  RFM95Modem.setCADTimeout(500);
+  if (!RHMeshManager_.init()) Serial.println("init failed");
+  RFM95Modem_.setTxPower(23, false);
+  RFM95Modem_.setFrequency(RF95_FREQ);
+  RFM95Modem_.setCADTimeout(500);
 }
