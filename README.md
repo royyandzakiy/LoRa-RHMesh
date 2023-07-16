@@ -58,7 +58,7 @@ const uint8_t targetAddress_ = FINAL_ADDRESS;
 
 <img width="700" src="docs/topology-route.png">
 
-after a route is discovered for a target node, it will be saved as a route entry of its routing table within that individual node. by saving the next direct node that is expected to be able connect it with the target node, even as intermediary. So in this example, node 2 only saves node 1 in it's route entry to connect with node final, not knowing whether node 1 is the only intermediary node, or might there be more. hence, node 1 is expected to have a route to connect with node final, in this example it will be a direct connection. node 2 does not have a direct route to node final, nor node 3
+after a route is discovered for a target node, it will be saved as a route entry of its routing table within that individual node. by saving the next direct node that is expected to be able connect it with the target node, even as intermediary. So in this example, `node 2` only saves `node 1` in it's route entry to connect with `node final`, not knowing whether `node 1` is the only intermediary node, or might there be more. hence, `node 1` is expected to have a route to connect with `node final`, in this example it will be a direct connection. `node 2` does not have a direct route to `node final`, nor `node 3` (because it only sends sensor data to `node final`)
 
 
 ## Misc
