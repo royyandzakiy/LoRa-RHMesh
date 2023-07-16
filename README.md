@@ -39,6 +39,9 @@ if you have a different wiring scheme, don't forget to change these lines in mai
 #define RFM95_INT 2
 ```
 
+---
+
+### Configuring The LoRa Module
 Change to 915.0, 434.0 or other frequency, must match LoRa chip/RX's freq!
 ```
 #define RF95_FREQ 915.0
@@ -47,6 +50,13 @@ Change to 915.0, 434.0 or other frequency, must match LoRa chip/RX's freq!
 By using Mesh, it has much greater memory requirements than just RH or RHRouter, and you may need to limit the max message length (characters) to prevent wierd crashes. Though you can change and experiment with message lengths by changing this
 ```
 #define RH_MESH_MAX_MESSAGE_LEN 50
+```
+
+You can add specific LoRa modes for the RFM95 module by editting the `rhSetup()`. Defaults after init (without any explicit `.set`) are 434.0MHz, 0.05MHz AFC pull-in, modulation FSK_Rb2_4Fd36.
+```
+RHDriver.setTxPower(23, false);
+RHDriver.setFrequency(RF95_FREQ);
+RHDriver.setCADTimeout(500);
 ```
 
 ### Topology
@@ -87,5 +97,19 @@ Even though this very project runs on RHMesh, which would expect the user to hav
 	    ||  _thisAddress == 2
 	    ||  _thisAddress == 3
 	    || (_thisAddress == 4 && (_from == 2 || _from == 3))
+...
+```
+
+### How to Send/Recieve
+We will send a message to another rhmesh node using this code, a route to the destination will be automatically discovered (this discovery function is the main point of using RHMesh, it automaticall generates a routing table for this node).
+```
+if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]), msgSend.size(), TARGET_ADDRESS) == RH_ROUTER_ERROR_NONE) {
+...
+```
+After that line, a return of `true` means we have been reliably delivered the message to the next node, and the next node has sent us an 'ACK'. If after a certain time there are no ACK, the sendtoWait will return a `false`. An important note is, the ACK is not from the target node, but anynode that has successfully received our node (other than the target node, is an intermediary node). Currently RHMesh does not tell if a message has successfully been received to the 'final' assigned target node. A way around this is by simply adding a logic to the 'final' target node to send a message to the 'initial' sender node after it received a message, as an artificial ACK.
+
+Now to add another logic, we wait for a message from another node, hold activities until a message arrives, or timeout reached. this particular code is NOT part of the ACK system to make sure sendtoWait has been reliably sent, this is an entirely new process.
+```
+if (RHMeshManager.recvfromAckTimeout(_msgRcvBuf, (uint8_t *) sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
 ...
 ```
