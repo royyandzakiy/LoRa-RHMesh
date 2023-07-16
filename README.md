@@ -35,7 +35,7 @@ GND    -------------- GND
 <summary>Schematic</summary>
 <img src="docs/esp32-pinout.jpeg" width="700">
 <br/>
-<img src="docs/schematic.jpeg" width="500">
+<img src="docs/wiring-schematic.jpeg" width="500">
 
 </details>
 
