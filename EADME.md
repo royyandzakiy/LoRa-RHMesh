@@ -6,7 +6,7 @@
 >
 > Feel free to use them, and contact me if you will!
 
-This example sketch shows how to create a simple addressed, routed reliable messaging client with the RHMesh class. It is designed to work with the other examples rf95_mesh_server* Hint: you can simulate other network topologies by setting the RH_TEST_NETWORK define in RHRouter.h
+This example sketch shows how to create a simple addressed, routed reliable messaging client with the RHMesh class. It is designed to work with the other examples rf95_mesh_server
 
 ### Getting Started
 - Make sure you have the wiring correct!
@@ -15,6 +15,7 @@ This example sketch shows how to create a simple addressed, routed reliable mess
 #define SELF_ADDRESS NODE3_ADDRESS
 #define TARGET_ADDRESS FINAL_ADDRESS
 ```
+    - You can simulate other network topologies by setting the `RH_TEST_NETWORK` define your topology in RHRouter.cpp. read more in Forced Topology section
 
 ### Wiring
 
