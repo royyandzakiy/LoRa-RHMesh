@@ -15,10 +15,9 @@ This example sketch shows how to create a simple addressed, routed reliable mess
 #define SELF_ADDRESS NODE3_ADDRESS
 #define TARGET_ADDRESS FINAL_ADDRESS
 ```
-    - You can simulate other network topologies by setting the `RH_TEST_NETWORK` define your topology in RHRouter.cpp. read more in Forced Topology section
+    - You can simulate other network topologies by setting the `RH_TEST_NETWORK` define your topology in RHRouter.cpp. read more in [Forced Topology section](#forced-topology)
 
 ### Wiring
-
 ```
 [RFM95] ------------- [ESP32]
 RESET  -------------- GPIO14
@@ -50,7 +49,6 @@ By using Mesh, it has much greater memory requirements than just RH or RHRouter,
 ```
 
 ### Topology
-
 This example of 4 node topology, in which the FINAL_ADDRESS node is expected to be the last node, simulating a common network in which this last node would be a border node connected to the internet, collecting messages from other nodes during it's lifetime. whilst node 1-3 would commonly send sensor data, and one could be an intermediary node for another. Feel free to make a totally different addressing
 ```
 #define NODE1_ADDRESS 1
@@ -65,8 +63,9 @@ You can actively change the current nodes behaviour by changing this line. Make 
 #define TARGET_ADDRESS FINAL_ADDRESS
 ```
 
-### Forced Topology
-
+<a name="forced-topology">
+<details>
+<summary>Forced Topology</summary>
 Even though this very project runs on RHMesh, which would expect the user to have a fully dynamic and fluid topology, you can force the routes/topology. it requires a little bit of hardcoding, you can inspect the code in RHRouter.cpp (line 223-263). It already has some premade topology examples that forces routing a certain way (it does this by dropping/not processing messages that does not comply the path), and the macro "RH_TEST_NETWORK" needs to be defined (before calling #include "RHMesh.h") to activate this forced topology. you can ofcourse add your own code that resembles your desired topology.
 ```
 ...
@@ -89,3 +88,4 @@ Even though this very project runs on RHMesh, which would expect the user to hav
 	    || (_thisAddress == 4 && (_from == 2 || _from == 3))
 ...
 ```
+</details>
