@@ -114,7 +114,7 @@ Even though this very project runs on RHMesh, which would expect the user to hav
 ```
 
 ### How the Send/Receive Works in RadioHead	Mesh
-We will send a message to another rhmesh node using this code, a route to the destination will be automatically discovered (this discovery function is the main point of using RHMesh, it automaticall generates a routing table for this node).
+We will send a message to another rhmesh node using this code, a route to the destination will be automatically discovered. this discovery function is the main point of using RHMesh, it automaticall generates a routing table for this node (for further investigation, check out function `bool doArp(uint8_t address);` in `RHMesh.h`).
 ```
 if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]), msgSend.size(), TARGET_ADDRESS) == RH_ROUTER_ERROR_NONE) {
 ...
