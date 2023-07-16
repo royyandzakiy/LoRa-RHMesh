@@ -65,8 +65,8 @@ You can actively change the current nodes behaviour by changing this line. Make 
 ```
 
 <a name="forced-topology">
-<details>
-<summary>Forced Topology</summary>
+### Forced Topology
+
 Even though this very project runs on RHMesh, which would expect the user to have a fully dynamic and fluid topology, you can force the routes/topology. it requires a little bit of hardcoding, you can inspect the code in RHRouter.cpp (line 223-263). It already has some premade topology examples that forces routing a certain way (it does this by dropping/not processing messages that does not comply the path), and the macro "RH_TEST_NETWORK" needs to be defined (before calling #include "RHMesh.h") to activate this forced topology. you can ofcourse add your own code that resembles your desired topology.
 ```
 ...
@@ -89,4 +89,3 @@ Even though this very project runs on RHMesh, which would expect the user to hav
 	    || (_thisAddress == 4 && (_from == 2 || _from == 3))
 ...
 ```
-</details>
