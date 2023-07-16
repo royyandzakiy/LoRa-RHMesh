@@ -116,15 +116,13 @@ Even though this very project runs on RHMesh, which would expect the user to hav
 ### How the Send/Receive Works in RadioHead	Mesh
 We will send a message to another rhmesh node using this code, a route to the destination will be automatically discovered. this discovery function is the main point of using RHMesh, it automaticall generates a routing table for this node (for further investigation, check out function `bool doArp(uint8_t address);` in `RHMesh.h`).
 ```
-if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]), msgSend.size(), TARGET_ADDRESS) == RH_ROUTER_ERROR_NONE) {
-...
+if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]), msgSend.size(), targetAddress_) == RH_ROUTER_ERROR_NONE) {
 ```
-After that line, a return of `true` means we have been reliably delivered the message to the next node, and the next node has sent us an 'ACK'. If after a certain time there are no ACK, the sendtoWait will return a `false`. An important note is, the ACK is not from the target node, but anynode that has successfully received our node (other than the target node, is an intermediary node). Currently RHMesh does not tell if a message has successfully been received to the 'final' assigned target node. A way around this is by simply adding a logic to the 'final' target node to send a message to the 'initial' sender node after it received a message, as an artificial ACK.
+After that line, a return of `true` means we have been reliably delivered the message to the next node, and the next node has sent us an 'ACK'. If after a certain time there are no ACK, the sendtoWait will return a `false`. An important note is, the ACK is not from the target node, but anynode that has successfully received our node (other than the target node, is an intermediary node). Currently RHMesh does not tell if a message has successfully been received to the 'final' assigned target node. A way around this is by simply adding a logic to the 'final' target node to send a REPLY message to the 'initial' sender node after it received a message, as an artificial ACK (this can be seen in `main.cpp`).
 
 Now to add another logic, we wait for a message from another node, hold activities until a message arrives, or timeout reached. this particular code is NOT part of the ACK system to make sure sendtoWait has been reliably sent, this is an entirely new process.
 ```
 if (RHMeshManager.recvfromAckTimeout(_msgRcvBuf, (uint8_t *) sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
-...
 ```
 
 ### Naming Style
