@@ -1,0 +1,36 @@
+{
+  "frameworks": [
+    "arduino"
+  ],
+  "keywords": [
+    "rf",
+    "radio",
+    "wireless"
+  ],
+  "version": "1.120",
+  "platforms": [
+    "*"
+  ],
+  "downloadUrl": "http://www.airspayce.com/mikem/arduino/RadioHead/RadioHead-1.120.zip",
+  "name": "RadioHead",
+  "headers": [
+    "RadioHead.h"
+  ],
+  "description": "The RadioHead Packet Radio library which provides a complete object-oriented library for sending and receiving packetized messages via RF22/24/26/27/69, Si4460/4461/4463/4464, nRF24/nRF905, SX1276/77/78, RFM95/96/97/98 and etc.",
+  "authors": [
+    {
+      "name": "Mike McCauley",
+      "url": "http://www.airspayce.com/mikem/arduino/RadioHead/index.html",
+      "email": "mikem@airspayce.com"
+    }
+  ],
+  "export": {
+    "exclude": [
+      "doc",
+      "project.cfg",
+      "STM32ArduinoCompat",
+      "tools"
+    ]
+  },
+  "homepage": "http://www.airspayce.com/mikem/arduino/RadioHead/index.html"
+}
