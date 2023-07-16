@@ -59,13 +59,20 @@ RHDriver.setCADTimeout(500);
 ```
 
 ### Topology
-This example of 4 node topology, in which the FINAL_ADDRESS node is expected to be the last node, simulating a common network in which this last node would be a border node connected to the internet, collecting messages from other nodes during it's lifetime. whilst node 1-3 would commonly send sensor data, and one could be an intermediary node for another. Feel free to make a totally different addressing
+This example of a 4 node topology, in which the `FINAL_ADDRESS` node is expected to be the last node in the network, simulating a common topology in which this last node would act as a border node connected to the internet, collecting messages from other nodes during it's lifetime, then sending them to cloud. node 1-3 would collect sensor data then send to final node, and in the process node 1-3 could be an intermediary node for one another. Feel free to make a totally different addressing scheme. after a route is discovered for a target node, it will be saved as a routing table within each individual node, by saving the next direct node that is expected to be able connect it with the target node.
 ```
 #define NODE1_ADDRESS 1
 #define NODE2_ADDRESS 2
 #define NODE3_ADDRESS 3
 #define FINAL_ADDRESS 254 // purposefully using the last namber
 ```
+<details>
+<summary>topology image</summary>
+<img width="40%" src="docs/topology-full.png">
+<br />
+<img width="40%" src="docs/topology-route.png">
+</details>
+
 
 You can actively change the current nodes behaviour by changing this line. Make sure you change it for every different node!
 ```
@@ -76,7 +83,7 @@ const uint8_t targetAddress_ = FINAL_ADDRESS;
 <a name="forced-topology"></a>
 ### Forced Topology
 
-Even though this very project runs on RHMesh, which would expect the user to have a fully dynamic and fluid topology, you can force the routes/topology. it requires a little bit of hardcoding, you can inspect the code in RHRouter.cpp (line 223-263). It already has some premade topology examples that forces routing a certain way (it does this by dropping/not processing messages that does not comply the path), and the macro "RH_TEST_NETWORK" needs to be defined (before calling #include "RHMesh.h") to activate this forced topology. you can ofcourse add your own code that resembles your desired topology.
+Even though this very project runs on RHMesh, which would expect the user to have a fully dynamic and fluid topology, you can force the routes/topology. it requires a little bit of hardcoding, you can inspect the code in RHRouter.cpp (line 223-263). It already has some premade topology examples that forces routing a certain way (it does this by dropping/not processing messages that does not comply the path), and the macro `RH_TEST_NETWORK` needs to be defined (before calling #include "RHMesh.h") to activate this forced topology. you can ofcourse add your own code that resembles your desired topology.
 ```
 ...
 #ifdef RH_TEST_NETWORK
@@ -99,7 +106,7 @@ Even though this very project runs on RHMesh, which would expect the user to hav
 ...
 ```
 
-### How the Send/Receive Works in RadioHead	
+### How the Send/Receive Works in RadioHead	Mesh
 We will send a message to another rhmesh node using this code, a route to the destination will be automatically discovered (this discovery function is the main point of using RHMesh, it automaticall generates a routing table for this node).
 ```
 if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]), msgSend.size(), TARGET_ADDRESS) == RH_ROUTER_ERROR_NONE) {
