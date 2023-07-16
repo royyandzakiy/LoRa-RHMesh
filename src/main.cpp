@@ -1,25 +1,10 @@
-// Example sketch showing how to create a simple addressed, routed reliable
-// messaging client with the RHMesh class. It is designed to work with the other
-// examples rf22_mesh_server* Hint: you can simulate other network topologies by
-// setting the RH_TEST_NETWORK define in RHRouter.h
+// #define RH_TEST_NETWORK 1 // activate Forced Topology
 
 #include <RHMesh.h>
 #include <RH_RF95.h>
 #include <SPI.h>
 
 #include <cstring>
-
-// pinout
-// [RFM95] ------------- [ESP32]
-// RESET  -------------- GPIO14
-// NSS/CS -------------- GPIO5
-// SCK    -------------- GPIO18
-// MOSI   -------------- GPIO23
-// MISO   -------------- GPIO19
-// DIO0   -------------- GPIO2
-//
-// 3.3V   -------------- 3.3V
-// GND    -------------- GND
 
 #define RFM95_CS 5
 #define RFM95_RST 14

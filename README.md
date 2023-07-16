@@ -1,4 +1,4 @@
-## LoRa RHMesh
+# LoRa RHMesh
 
 > This repository is a place in which I include all projects for LoRa RHMesh development for my thesis. I provide all projects within the `projects` folder. All development are made by myself, yet it is made based upon many different projects scattered all over the internet.
 >
@@ -39,8 +39,7 @@ if you have a different wiring scheme, don't forget to change these lines in mai
 #define RFM95_INT 2
 ```
 
----
-
+## Misc
 ### Configuring The LoRa Module
 Change to 915.0, 434.0 or other frequency, must match LoRa chip/RX's freq!
 ```
@@ -100,7 +99,7 @@ Even though this very project runs on RHMesh, which would expect the user to hav
 ...
 ```
 
-### How to Send/Recieve
+### How the Send/Receive Works in RadioHead	
 We will send a message to another rhmesh node using this code, a route to the destination will be automatically discovered (this discovery function is the main point of using RHMesh, it automaticall generates a routing table for this node).
 ```
 if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]), msgSend.size(), TARGET_ADDRESS) == RH_ROUTER_ERROR_NONE) {
@@ -112,4 +111,11 @@ Now to add another logic, we wait for a message from another node, hold activiti
 ```
 if (RHMeshManager.recvfromAckTimeout(_msgRcvBuf, (uint8_t *) sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
 ...
+```
+
+### Naming Style
+```
+localVariable_
+_tempVariable
+globalVariable
 ```
