@@ -68,9 +68,9 @@ This example of a 4 node topology, in which the `FINAL_ADDRESS` node is expected
 ```
 <details>
 <summary>topology image</summary>
-<img width="40%" src="docs/topology-full.png">
+<img min-width="500" src="docs/topology-full.png">
 <br />
-<img width="40%" src="docs/topology-route.png">
+<img min-width="500" src="docs/topology-route.png">
 </details>
 
 
