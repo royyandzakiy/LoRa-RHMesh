@@ -120,7 +120,7 @@ if (RHMeshManager.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]), msgSend.s
 ```
 After that line, a return of `true` means we have been reliably delivered the message to the next node, and the next node has sent us an 'ACK'. If after a certain time there are no ACK, the sendtoWait will return a `false`. An important note is, the ACK is not from the target node, but anynode that has successfully received our node (other than the target node, is an intermediary node). Currently RHMesh does not tell if a message has successfully been received to the 'final' assigned target node. A way around this is by simply adding a logic to the 'final' target node to send a REPLY message to the 'initial' sender node after it received a message, as an artificial ACK (this can be seen in `main.cpp`).
 
-Now to add another logic, we wait for a message from another node, hold activities until a message arrives, or timeout reached. this particular code is NOT part of the ACK system to make sure sendtoWait has been reliably sent, this is an entirely new process.
+After successfully sending a message, we turn into `RECEIVING_MODE` and wait for a message coming from another node. whilst `recvfromAckTimeout` is active, it will hold activities until a message arrives, or timeout reached.
 ```
 if (RHMeshManager.recvfromAckTimeout(_msgRcvBuf, (uint8_t *) sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
 ```
