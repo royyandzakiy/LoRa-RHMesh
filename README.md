@@ -47,7 +47,7 @@ This example of a 4 node topology, in which the `FINAL_ADDRESS` node is expected
 #define NODE1_ADDRESS 1
 #define NODE2_ADDRESS 2
 #define NODE3_ADDRESS 3
-#define FINAL_ADDRESS 254 // purposefully using the last namber
+#define FINAL_ADDRESS 255 // purposefully using the last namber
 ```
 
 You can actively change the current nodes behaviour by changing this line. Make sure you change it for every different node!
@@ -56,7 +56,7 @@ const uint8_t selfAddress_ = NODE3_ADDRESS;
 const uint8_t targetAddress_ = FINAL_ADDRESS;
 ```
 
-<img width="700" src="docs/topology-route-entry.png">
+<img width="700" src="docs/topology-route.png">
 
 after a route is discovered for a target node, it will be saved as a route entry of its routing table within that individual node. by saving the next direct node that is expected to be able connect it with the target node, even as intermediary. So in this example, `node 2` only saves `node 1` in it's route entry to connect with `node final`, not knowing whether `node 1` is the only intermediary node, or might there be more. hence, `node 1` is expected to have a route to connect with `node final`, in this example it will be a direct connection. `node 2` does not have a direct route to `node final`, but it has a direct connection with `node 3`
 

@@ -20,7 +20,7 @@
 #define NODE1_ADDRESS 1
 #define NODE2_ADDRESS 2
 #define NODE3_ADDRESS 3
-#define FINAL_ADDRESS 254  // purposefully using the last namber
+#define FINAL_ADDRESS 255  // purposefully using the last namber
 
 const uint8_t selfAddress_ = NODE3_ADDRESS;  // CHANGE THIS!!!
 const uint8_t targetAddress_ = FINAL_ADDRESS;
