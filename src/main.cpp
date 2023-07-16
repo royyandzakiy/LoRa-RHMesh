@@ -37,17 +37,17 @@
 #define RECEIVING_MODE 1
 
 // CHANGE THIS!!!
-#define SELF_ADDRESS NODE3_ADDRESS
-#define TARGET_ADDRESS FINAL_ADDRESS
+const int selfAddress_ = NODE3_ADDRESS;
+const int targetAddress_ = FINAL_ADDRESS;
 
 // radio driver & message mesh delivery/receipt manager
 RH_RF95 RFM95Modem_(RFM95_CS, RFM95_INT);
-RHMesh RHMeshManager_(RFM95Modem_, SELF_ADDRESS);
-uint8_t mode_ = SENDING_MODE;
+RHMesh RHMeshManager_(RFM95Modem_, selfAddress_);
+uint8_t mode_ = RECEIVING_MODE;
 
 // these are expected to be global/externally exposed variables, if you plan to
 // make a class to wrap this
-std::string msgSend = "Hello, from " + SELF_ADDRESS;
+std::string msgSend = "Hello, from " + selfAddress_;
 std::string msgRcv;
 
 void rhSetup();
@@ -63,16 +63,16 @@ void loop() {
   uint8_t _msgFrom;
   uint8_t _msgRcvBuf[RH_MESH_MAX_MESSAGE_LEN];
 
-  if (millis() - _lastSend > sendInterval_) {
+  if ((millis() - _lastSend > sendInterval_) && selfAddress_ != FINAL_ADDRESS) {
     mode_ = SENDING_MODE;
   }
 
   if (mode_ == SENDING_MODE) {
     // Send a message to another rhmesh node
-    Serial.println("Sending to " + TARGET_ADDRESS);
+    Serial.println("Sending to " + targetAddress_);
     if (RHMeshManager_.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]),
                                  msgSend.size(),
-                                 TARGET_ADDRESS) == RH_ROUTER_ERROR_NONE) {
+                                 targetAddress_) == RH_ROUTER_ERROR_NONE) {
       // message successfully be sent to the target node, or next neighboring
       // expecting to recieve a simple reply from the target node
       if (RHMeshManager_.recvfromAckTimeout(
