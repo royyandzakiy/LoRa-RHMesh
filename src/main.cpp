@@ -7,9 +7,14 @@
 
 #include <cstring>
 
+// ESP32 DOIT
 #define RFM95_CS 5
 #define RFM95_RST 14
 #define RFM95_INT 2
+// TTGO T-BEAM
+// #define RFM95_CS 18
+// #define RFM95_RST 14
+// #define RFM95_INT 26
 
 #define RF95_FREQ 915.0
 
