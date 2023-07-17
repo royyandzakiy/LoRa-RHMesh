@@ -11,7 +11,7 @@
 #define RFM95_INT 2
 
 #define RF95_FREQ 915.0
-#define RH_MESH_MAX_MESSAGE_LEN 50
+#define RH_MESH_MAX_MESSAGE_LEN 100
 
 #define SENDING_MODE 0
 #define RECEIVING_MODE 1
@@ -22,8 +22,13 @@
 #define NODE3_ADDRESS 3
 #define FINAL_ADDRESS 255  // purposefully using the last namber
 
+#if defined(SELF_ADDRESS) && defined(TARGET_ADDRESS)
+const uint8_t selfAddress_ = SELF_ADDRESS;
+const uint8_t targetAddress_ = TARGET_ADDRESS;
+#else
 const uint8_t selfAddress_ = NODE3_ADDRESS;  // CHANGE THIS!!!
 const uint8_t targetAddress_ = FINAL_ADDRESS;
+#endif
 
 // radio driver & message mesh delivery/receipt manager
 RH_RF95 RFM95Modem_(RFM95_CS, RFM95_INT);
@@ -40,13 +45,16 @@ void rhSetup();
 void setup() {
   Serial.begin(115200);
   rhSetup();
+  Serial.println(" ---------------- LORA NODE " + String(selfAddress_) +
+                 " INIT ---------------- ");
 }
 
-long _lastSend = 0, sendInterval_ = 10000;  // send every 10 seconds
+long _lastSend = 0, sendInterval_ = 3000;  // send every 10 seconds
+uint8_t _msgRcvBuf[RH_MESH_MAX_MESSAGE_LEN];
 
 void loop() {
   uint8_t _msgFrom;
-  uint8_t _msgRcvBuf[RH_MESH_MAX_MESSAGE_LEN];
+  uint8_t _msgRcvBufLen = sizeof(_msgRcvBuf);
 
   if ((millis() - _lastSend > sendInterval_) && selfAddress_ != FINAL_ADDRESS) {
     mode_ = SENDING_MODE;
@@ -54,17 +62,19 @@ void loop() {
 
   if (mode_ == SENDING_MODE) {
     // Send a message to another rhmesh node
-    Serial.println("Sending to " + targetAddress_);
-    if (RHMeshManager_.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]),
-                                  msgSend.size(),
-                                  targetAddress_) == RH_ROUTER_ERROR_NONE) {
+    Serial.printf("Sending to %d...", targetAddress_);
+    uint8_t _err =
+        RHMeshManager_.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]),
+                                  msgSend.size(), targetAddress_);
+    if (_err == RH_ROUTER_ERROR_NONE) {
       // message successfully be sent to the target node, or next neighboring
       // expecting to recieve a simple reply from the target node
+      Serial.printf(" successfull! Awaiting for Reply\n");
+
       if (RHMeshManager_.recvfromAckTimeout(
               _msgRcvBuf, (uint8_t *)sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
-        msgRcv = std::string("got reply from : " + std::to_string(_msgFrom) +
-                             ":" + reinterpret_cast<char *>(_msgRcvBuf));
-        Serial.printf("%s\n", msgRcv);
+        // Serial.printf("Received a Reply: [%d] \"%s\"\n", reinterpret_cast<char *>(_msgRcvBuf));
+        Serial.println("got reply!");
       } else {
         Serial.println("No reply, is the target node running?");
       }
@@ -79,18 +89,25 @@ void loop() {
 
   if (mode_ == RECEIVING_MODE) {
     // while at it, wait for a message from other nodes
-    if (RHMeshManager_.recvfromAckTimeout(
-            _msgRcvBuf, (uint8_t *)sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
-      msgRcv = std::string("got msg from : " + std::to_string(_msgFrom) + ":" +
-                           reinterpret_cast<char *>(_msgRcvBuf) +
-                           ". sending a reply...");
-      Serial.printf("%s\n", msgRcv);
+    Serial.println("Receiving mode active");
+
+    if (RHMeshManager_.recvfromAckTimeout(_msgRcvBuf, &_msgRcvBufLen, 3000,
+                                          &_msgFrom)) {
+      Serial.println("Received a message");
+      char buf_[RH_MESH_MAX_MESSAGE_LEN];
+      std::sprintf(buf_, "%s", reinterpret_cast<char *>(_msgRcvBuf));
+      msgRcv = std::string(buf_);
+
+      // do something with message, for example pass it through a callback
+      Serial.printf("[%d] \"%s\". Sending a reply...\n", _msgFrom,
+                    msgRcv.c_str());
+
+      msgRcv = "";
 
       std::string _msgRply("Hi node %d, got the message!", _msgFrom);
-
-      if (RHMeshManager_.sendtoWait(reinterpret_cast<uint8_t *>(&_msgRply[0]),
-                                    _msgRply.size(),
-                                    _msgFrom) == RH_ROUTER_ERROR_NONE) {
+      uint8_t _err = RHMeshManager_.sendtoWait(
+          reinterpret_cast<uint8_t *>(&_msgRply[0]), _msgRply.size(), _msgFrom);
+      if (_err == RH_ROUTER_ERROR_NONE) {
         // message successfully received by either final target node, or next
         // neighboring node. do nothing...
       } else {
