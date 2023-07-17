@@ -7,6 +7,12 @@
 
 #include <cstring>
 
+#define RF95_FREQ 915.0
+#define WDT_TIMEOUT 15
+
+#if defined(RFM95_CS) && defined(RFM95_RST) && defined(RFM95_INT)
+#else
+// Board pinout
 // ESP32 DOIT
 #define RFM95_CS 5
 #define RFM95_RST 14
@@ -15,26 +21,23 @@
 // #define RFM95_CS 18
 // #define RFM95_RST 14
 // #define RFM95_INT 26
-
-#define RF95_FREQ 915.0
+#endif
 
 #define SENDING_MODE 0
 #define RECEIVING_MODE 1
-
-#define WDT_TIMEOUT 15
-
-// Topology
-#define NODE1_ADDRESS 1
-#define NODE2_ADDRESS 2
-#define NODE3_ADDRESS 3
-#define FINAL_ADDRESS 255  // purposefully using the last namber
+#define ENDNODE_ADDRESS 255  // purposefully using the last namber
 
 #if defined(SELF_ADDRESS) && defined(TARGET_ADDRESS)
 const uint8_t selfAddress_ = SELF_ADDRESS;
 const uint8_t targetAddress_ = TARGET_ADDRESS;
 #else
+// Topology
+#define NODE1_ADDRESS 1
+#define NODE2_ADDRESS 2
+#define NODE3_ADDRESS 3
+
 const uint8_t selfAddress_ = NODE3_ADDRESS;  // CHANGE THIS!!!
-const uint8_t targetAddress_ = FINAL_ADDRESS;
+const uint8_t targetAddress_ = ENDNODE_ADDRESS;
 #endif
 
 // radio driver & message mesh delivery/receipt manager
@@ -52,8 +55,8 @@ void rhSetup();
 
 void setup() {
   Serial.begin(115200);
-  esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
-  esp_task_wdt_add(NULL); //add current thread to WDT watch
+  esp_task_wdt_init(WDT_TIMEOUT, true);  // enable panic so ESP32 restarts
+  esp_task_wdt_add(NULL);                // add current thread to WDT watch
 
   rhSetup();
   Serial.println(" ---------------- LORA NODE " + String(selfAddress_) +
@@ -67,7 +70,8 @@ void loop() {
   uint8_t _msgFrom;
   uint8_t _msgRcvBufLen = sizeof(_msgRcvBuf);
 
-  if ((millis() - _lastSend > sendInterval_) && selfAddress_ != FINAL_ADDRESS) {
+  if ((millis() - _lastSend > sendInterval_) &&
+      selfAddress_ != ENDNODE_ADDRESS) {
     mode_ = SENDING_MODE;
   }
 
@@ -86,12 +90,12 @@ void loop() {
       if (RHMeshManager_.recvfromAckTimeout(_msgRcvBuf, &_msgRcvBufLen, 3000,
                                             &_msgFrom)) {
         char buf_[RH_MESH_MAX_MESSAGE_LEN];
-        
+
         std::sprintf(buf_, "%s", reinterpret_cast<char *>(_msgRcvBuf));
         msgRcv = std::string(buf_);
-        Serial.printf("Received a Reply: [%d] \"%s\"\n", _msgFrom,
-                      msgRcv.c_str());
-        
+        Serial.printf("[%d] \"%s\" (%d). Sending a reply...\n", _msgFrom,
+                      msgRcv.c_str(), RFM95Modem_.lastRssi());
+
       } else {
         Serial.println("No reply, is the target node running?");
       }
@@ -120,8 +124,8 @@ void loop() {
       msgRcv = std::string(buf_);
 
       // do something with message, for example pass it through a callback
-      Serial.printf("[%d] \"%s\". Sending a reply...\n", _msgFrom,
-                    msgRcv.c_str());
+      Serial.printf("[%d] \"%s\" (%d). Sending a reply...\n", _msgFrom,
+                    msgRcv.c_str(), RFM95Modem_.lastRssi());
 
       msgRcv = "";
 
