@@ -71,10 +71,10 @@ void loop() {
       // expecting to recieve a simple reply from the target node
       Serial.printf(" successfull! Awaiting for Reply\n");
 
-      if (RHMeshManager_.recvfromAckTimeout(
-              _msgRcvBuf, (uint8_t *)sizeof(_msgRcvBuf), 3000, &_msgFrom)) {
-        // Serial.printf("Received a Reply: [%d] \"%s\"\n", reinterpret_cast<char *>(_msgRcvBuf));
-        Serial.println("got reply!");
+      if (RHMeshManager_.recvfromAckTimeout(_msgRcvBuf, &_msgRcvBufLen, 3000,
+                                            &_msgFrom)) {
+        Serial.printf("Received a Reply: [%d] \"%s\"\n",
+        _msgFrom, reinterpret_cast<char *>(_msgRcvBuf));
       } else {
         Serial.println("No reply, is the target node running?");
       }
