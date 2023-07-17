@@ -2,7 +2,9 @@
 
 This page is made to list all bugs found
 
-calling `RHMeshManager_.sendtoWait` with no other receiver node active, gives a return of `RH_ROUTER_ERROR_NONE`. shouldn't it be any of the others?
+---
+
+- calling `RHMeshManager_.sendtoWait` with no other receiver node active, gives a return of `RH_ROUTER_ERROR_NONE`. shouldn't it be any of the others?
 ```
 #define RH_ROUTER_ERROR_NO_ROUTE          2
 #define RH_ROUTER_ERROR_TIMEOUT           3

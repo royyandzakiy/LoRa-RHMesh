@@ -11,7 +11,7 @@
 #define RFM95_INT 2
 
 #define RF95_FREQ 915.0
-#define RH_MESH_MAX_MESSAGE_LEN 100
+#define RH_MESH_MAX_MESSAGE_LEN 50
 
 #define SENDING_MODE 0
 #define RECEIVING_MODE 1
@@ -37,7 +37,8 @@ uint8_t mode_ = RECEIVING_MODE;
 
 // these are expected to be global/externally exposed variables, if you plan to
 // make a class to wrap this
-std::string msgSend = "Hello, from " + selfAddress_;
+std::string msgSend =
+    String("Hello from node " + String(selfAddress_) + "!").c_str();
 std::string msgRcv;
 
 void rhSetup();
@@ -62,7 +63,7 @@ void loop() {
 
   if (mode_ == SENDING_MODE) {
     // Send a message to another rhmesh node
-    Serial.printf("Sending to %d...", targetAddress_);
+    Serial.printf("Sending \"%s\" to %d...", msgSend.c_str(), targetAddress_);
     uint8_t _err =
         RHMeshManager_.sendtoWait(reinterpret_cast<uint8_t *>(&msgSend[0]),
                                   msgSend.size(), targetAddress_);
@@ -73,8 +74,11 @@ void loop() {
 
       if (RHMeshManager_.recvfromAckTimeout(_msgRcvBuf, &_msgRcvBufLen, 3000,
                                             &_msgFrom)) {
-        Serial.printf("Received a Reply: [%d] \"%s\"\n",
-        _msgFrom, reinterpret_cast<char *>(_msgRcvBuf));
+        char buf_[RH_MESH_MAX_MESSAGE_LEN];
+        std::sprintf(buf_, "%s", reinterpret_cast<char *>(_msgRcvBuf));
+        msgRcv = std::string(buf_);
+        Serial.printf("Received a Reply: [%d] \"%s\"\n", _msgFrom,
+                      msgRcv.c_str());
       } else {
         Serial.println("No reply, is the target node running?");
       }
@@ -104,14 +108,15 @@ void loop() {
 
       msgRcv = "";
 
-      std::string _msgRply("Hi node %d, got the message!", _msgFrom);
+      std::string _msgRply =
+          String("Hi node " + String(_msgFrom) + ", got the message!").c_str();
       uint8_t _err = RHMeshManager_.sendtoWait(
           reinterpret_cast<uint8_t *>(&_msgRply[0]), _msgRply.size(), _msgFrom);
       if (_err == RH_ROUTER_ERROR_NONE) {
         // message successfully received by either final target node, or next
         // neighboring node. do nothing...
       } else {
-        Serial.println("No messages coming in...");
+        Serial.println("Fail to send reply...");
       }
     }
   }
