@@ -3,6 +3,7 @@
 #include <RHMesh.h>
 #include <RH_RF95.h>
 #include <SPI.h>
+#include <esp_task_wdt.h>
 
 #include <cstring>
 
@@ -11,10 +12,11 @@
 #define RFM95_INT 2
 
 #define RF95_FREQ 915.0
-#define RH_MESH_MAX_MESSAGE_LEN 50
 
 #define SENDING_MODE 0
 #define RECEIVING_MODE 1
+
+#define WDT_TIMEOUT 15
 
 // Topology
 #define NODE1_ADDRESS 1
@@ -45,6 +47,9 @@ void rhSetup();
 
 void setup() {
   Serial.begin(115200);
+  esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
+  esp_task_wdt_add(NULL); //add current thread to WDT watch
+
   rhSetup();
   Serial.println(" ---------------- LORA NODE " + String(selfAddress_) +
                  " INIT ---------------- ");
@@ -70,18 +75,23 @@ void loop() {
     if (_err == RH_ROUTER_ERROR_NONE) {
       // message successfully be sent to the target node, or next neighboring
       // expecting to recieve a simple reply from the target node
+      esp_task_wdt_reset();
       Serial.printf(" successfull! Awaiting for Reply\n");
 
       if (RHMeshManager_.recvfromAckTimeout(_msgRcvBuf, &_msgRcvBufLen, 3000,
                                             &_msgFrom)) {
         char buf_[RH_MESH_MAX_MESSAGE_LEN];
+        
         std::sprintf(buf_, "%s", reinterpret_cast<char *>(_msgRcvBuf));
         msgRcv = std::string(buf_);
         Serial.printf("Received a Reply: [%d] \"%s\"\n", _msgFrom,
                       msgRcv.c_str());
+        
       } else {
         Serial.println("No reply, is the target node running?");
       }
+
+      esp_task_wdt_reset();
     } else {
       Serial.println(
           "sendtoWait failed. No response from intermediary node, are they "
@@ -97,8 +107,10 @@ void loop() {
 
     if (RHMeshManager_.recvfromAckTimeout(_msgRcvBuf, &_msgRcvBufLen, 3000,
                                           &_msgFrom)) {
-      Serial.println("Received a message");
       char buf_[RH_MESH_MAX_MESSAGE_LEN];
+
+      esp_task_wdt_reset();
+      Serial.println("Received a message");
       std::sprintf(buf_, "%s", reinterpret_cast<char *>(_msgRcvBuf));
       msgRcv = std::string(buf_);
 
@@ -118,8 +130,12 @@ void loop() {
       } else {
         Serial.println("Fail to send reply...");
       }
+
+      esp_task_wdt_reset();
     }
   }
+
+  esp_task_wdt_reset();
 }
 
 void rhSetup() {
