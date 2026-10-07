@@ -16,7 +16,9 @@
 #define RH_MESH_MESSAGE_TYPE_ROUTE_FAILURE                  3
 
 // Timeout for address resolution in milliecs
+#ifndef RH_MESH_ARP_TIMEOUT
 #define RH_MESH_ARP_TIMEOUT 4000
+#endif
 
 /////////////////////////////////////////////////////////////////////
 /// \class RHMesh RHMesh.h <RHMesh.h>
@@ -251,7 +253,7 @@ protected:
 
 private:
     /// Temporary message buffer
-    static uint8_t _tmpMessage[RH_ROUTER_MAX_MESSAGE_LEN];
+    uint8_t _tmpMessage[RH_ROUTER_MAX_MESSAGE_LEN];
 
 };
 

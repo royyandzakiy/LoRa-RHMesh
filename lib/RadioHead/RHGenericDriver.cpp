@@ -18,6 +18,7 @@ RHGenericDriver::RHGenericDriver()
     _txGood(0),
     _cad_timeout(0)
 {
+    _promiscuous = false;
 }
 
 bool RHGenericDriver::init()
