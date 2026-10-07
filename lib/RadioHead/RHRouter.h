@@ -328,7 +328,7 @@ protected:
 private:
 
     /// Temporary mesage buffer
-    static RoutedMessage _tmpMessage;
+    RoutedMessage _tmpMessage;
 
     /// Local routing table
     RoutingTableEntry    _routes[RH_ROUTING_TABLE_SIZE];

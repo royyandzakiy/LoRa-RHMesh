@@ -251,7 +251,7 @@ protected:
 
 private:
     /// Temporary message buffer
-    static uint8_t _tmpMessage[RH_ROUTER_MAX_MESSAGE_LEN];
+    uint8_t _tmpMessage[RH_ROUTER_MAX_MESSAGE_LEN];
 
 };
 

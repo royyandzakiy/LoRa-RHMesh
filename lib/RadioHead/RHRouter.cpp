@@ -13,7 +13,6 @@
 
 #include <RHRouter.h>
 
-RHRouter::RoutedMessage RHRouter::_tmpMessage;
 
 ////////////////////////////////////////////////////////////////////
 // Constructors
