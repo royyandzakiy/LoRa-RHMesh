@@ -1,0 +1,49 @@
+{
+  "name": "LoRa-RHMesh",
+  "version": "1.0.0",
+  "description": "LoRa mesh networking for RFM95/SX127x on top of RadioHead's RHMesh: end-to-end delivery confirmation, route discovery that works at SF12, and a host simulator to test mesh code without radios.",
+  "keywords": [
+    "lora",
+    "mesh",
+    "radiohead",
+    "rhmesh",
+    "rfm95",
+    "sx1276",
+    "simulator"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/royyandzakiy/LoRa-RHMesh.git"
+  },
+  "authors": [
+    {
+      "name": "Royyan Dzakiy",
+      "url": "https://github.com/royyandzakiy",
+      "maintainer": true
+    }
+  ],
+  "license": "GPL-3.0-only",
+  "frameworks": "*",
+  "platforms": "*",
+  "headers": "LoRaRHMesh.h",
+  "dependencies": [
+    {
+      "name": "RadioHead",
+      "version": "https://github.com/epsilonrt/RadioHead.git#v1.143",
+      "frameworks": "arduino"
+    }
+  ],
+  "build": {
+    "extraScript": "extra_script.py"
+  },
+  "export": {
+    "exclude": [
+      ".github",
+      ".pio",
+      ".vscode",
+      "PLAN.md",
+      "scripts",
+      "platformio.ini"
+    ]
+  }
+}
