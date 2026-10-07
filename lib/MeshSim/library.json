@@ -1,0 +1,6 @@
+{
+  "name": "MeshSim",
+  "version": "0.1.0",
+  "description": "Host simulator for RHMesh nodes: a shared ether, a fake radio driver and one thread per node",
+  "platforms": "native"
+}

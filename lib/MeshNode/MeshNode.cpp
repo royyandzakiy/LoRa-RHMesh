@@ -14,7 +14,7 @@ void MeshNode::onMessage(MessageHandler handler, void* ctx) {
 
 MeshNode::SendResult MeshNode::send(uint8_t dest, const uint8_t* data, uint8_t len) {
   if (dest == RH_BROADCAST_ADDRESS || dest == address_) return SendResult::BadAddress;
-  if (len > kMaxPayload) return SendResult::TooLong;
+  if (len > maxPayload()) return SendResult::TooLong;
 
   const uint8_t seq = nextSeq_++;
   txBuf_[0] = kData;
@@ -72,6 +72,12 @@ int MeshNode::handleIncoming(uint16_t timeoutMs, uint8_t ackFrom) {
     handler_(msg, handlerCtx_);
   }
   return kOther;
+}
+
+uint8_t MeshNode::maxPayload() {
+  const int overhead = sizeof(RHRouter::RoutedMessageHeader) + sizeof(RHMesh::MeshMessageHeader) + kHeaderLen;
+  const int fromDriver = driver_.maxMessageLength() - overhead;
+  return fromDriver < kMaxPayload ? fromDriver : kMaxPayload;
 }
 
 bool MeshNode::nextHopTo(uint8_t dest, uint8_t* nextHop) {

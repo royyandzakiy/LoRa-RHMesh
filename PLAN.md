@@ -1,6 +1,6 @@
 # Revival plan
 
-Turning this thesis snapshot into a working reference repo, in 4 PRs. Status: **PR 1 in progress** (branch `feat/meshnode-core`).
+Turning this thesis snapshot into a working reference repo, in 4 PRs. Status: PR 1 done (`feat/meshnode-core`), **PR 2 in progress** (`feat/native-sim`, stacked on PR 1).
 
 ## Context
 The repo has stars and forks but is a frozen thesis snapshot. People use it as a small, readable RHMesh-on-ESP32 example. The goal is to keep it small but make it **correct, runnable without hardware, and checked by CI**:
@@ -63,6 +63,15 @@ Key finding: `RHRouter::_tmpMessage` is a **static** class member (`RHRouter.h:3
 - Unpinned `platform = espressif32` now pulls Arduino-ESP32 3.x, which doesn't compile RadioHead (`RH_ASK` timers). It's pinned to `espressif32@6.10.0`.
 - `MeshNode::send()` blocks until the end-to-end ACK or timeout (like the old send-then-wait-reply loop), instead of the async `onDelivered` callback. That's simpler to read, and an async version can come later if needed.
 - `RH_TEST_NETWORK` is wired up as the 3-board `testnet-node-1..3` envs (topology 4 = line 1-2-3).
+
+### Found while doing PR 2
+- **Upstream RadioHead bug:** `RHGenericDriver`'s constructor never initializes `_promiscuous`. A global driver (the ESP32 case) is zeroed, so it's hidden there. A driver on the stack or heap can start promiscuous, and RHRouter then re-forwards frames it only overheard, which breaks routing. Patched in the vendored lib and logged in `PATCHES.md`.
+- **Max payload:** `MeshNode::kMaxPayload` assumed RadioHead's generic 255-byte limit. RH_RF95 carries 251, so a full-size message would fail on hardware. Added `MeshNode::maxPayload()`, based on the driver (243 bytes on RFM95). The sim driver uses the same 251.
+- The sim lives in `lib/MeshSim/` (a local library, native only) instead of `sim/`, with `sim/demo.cpp` as the runnable program. `SimEther::setTrace()` prints every frame on the air.
+- It runs natively on Windows with MSYS2 g++: a stub `netinet/in.h` and `-D RH_PLATFORM=6` replace the Linux-only platform detection. Linux/WSL builds use the real header via `#include_next`.
+- Unity aborts failed tests with `longjmp`, which skips destructors and leaves node threads running on freed memory. The `native` env sets `UNITY_EXCLUDE_SETJMP_H`.
+- The tests pass with or without the `_tmpMessage` patch. The race is real but the window is too small to hit; the patch stays as a correctness fix.
+- Two PlatformIO cores on one machine (`pio` on PATH 6.1.18, VS Code's 6.2.0) keep swapping SCons versions, and `-t exec` fails under the old one. Use one core.
 
 ## Critical files
 - `src/main.cpp` (rewrite to a thin shell)

@@ -11,6 +11,7 @@ class MeshNode {
 
   // Every message starts with a type byte and a sequence byte.
   static constexpr uint8_t kHeaderLen = 2;
+  // Upper bound for buffers. The real limit depends on the radio, see maxPayload().
   static constexpr uint8_t kMaxPayload = RH_MESH_MAX_MESSAGE_LEN - kHeaderLen;
 
   enum class SendResult : uint8_t {
@@ -18,7 +19,7 @@ class MeshNode {
     NoAck,       // first hop accepted it, but no end-to-end ACK arrived in time
     NoRoute,     // route discovery found no path to the destination
     HopFailed,   // next hop did not ACK (off the air or out of range)
-    TooLong,     // payload larger than kMaxPayload
+    TooLong,     // payload larger than maxPayload()
     BadAddress,  // destination is the broadcast address or this node
   };
 
@@ -54,6 +55,10 @@ class MeshNode {
 
   // Next hop towards dest from the routing table, false if no valid route is known.
   bool nextHopTo(uint8_t dest, uint8_t* nextHop);
+
+  // Largest payload send() accepts. RH_RF95 carries 251 bytes, less than the
+  // 255 RHMesh assumes, so this is smaller than kMaxPayload on real radios.
+  uint8_t maxPayload();
 
   uint8_t address() const { return address_; }
   RHMesh& mesh() { return mesh_; }
