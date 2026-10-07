@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  simulator:
+    name: Simulator tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-native-${{ hashFiles('platformio.ini') }}
+      - run: pip install platformio
+      - run: pio test -e native
+      - name: Run the demo
+        run: pio run -e sim-demo -t exec
+
+  firmware:
+    name: Firmware builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-esp32-${{ hashFiles('platformio.ini') }}
+      - run: pip install platformio
+      # Every env except the host ones, read from platformio.ini so new envs are built too.
+      - name: Build all hardware envs
+        run: |
+          envs=$(pio project config --json-output | python -c "
+          import json, sys
+          for section, _ in json.load(sys.stdin):
+              if section.startswith('env:') and section not in ('env:native', 'env:sim-demo'):
+                  print('-e', section[4:], end=' ')
+          ")
+          pio run $envs

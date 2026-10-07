@@ -1,20 +1,28 @@
 // Forced topology: pass -D RH_TEST_NETWORK=N as a build flag (see platformio.ini).
 // A #define here has no effect, RHRouter.cpp is compiled separately.
 
-#include <Arduino.h>
+#include <BoardConfig.h>
 #include <MeshNode.h>
 #include <RH_RF95.h>
 #include <SPI.h>
 #include <esp_task_wdt.h>
 
-#define RF95_FREQ 915.0
+// Timing defaults suit the default modem setting (Bw125Cr45Sf128, ~60 ms per frame).
+// Slower settings need all of them raised, see the longrange envs in platformio.ini.
+#ifndef SEND_INTERVAL_MS
+#define SEND_INTERVAL_MS 3000
+#endif
+// Per-hop ACK wait, RadioHead's default. Must cover a frame and its ACK on air.
+#ifndef HOP_TIMEOUT_MS
+#define HOP_TIMEOUT_MS 200
+#endif
+// End-to-end ACK wait, must cover the trip there and back over every hop.
+#ifndef ACK_TIMEOUT_MS
+#define ACK_TIMEOUT_MS 3000
+#endif
+// Longer than the slowest send (route discovery plus ACK timeout), or the watchdog resets mid-send.
+#ifndef WDT_TIMEOUT_S
 #define WDT_TIMEOUT_S 15
-
-// Default pinout is the ESP32 DOIT devkit, platformio.ini overrides it per board.
-#ifndef RFM95_CS
-#define RFM95_CS 5
-#define RFM95_RST 14
-#define RFM95_INT 2
 #endif
 
 // The end node only listens and ACKs. Not 255, that is RadioHead's broadcast address.
@@ -33,7 +41,7 @@ const uint8_t targetAddress_ = ENDNODE_ADDRESS;
 static_assert(selfAddress_ <= MeshNode::kMaxNodeAddress, "255 is the broadcast address");
 static_assert(targetAddress_ <= MeshNode::kMaxNodeAddress, "255 is the broadcast address");
 
-const unsigned long sendIntervalMs_ = 3000;
+const unsigned long sendIntervalMs_ = SEND_INTERVAL_MS;
 
 RH_RF95 rfm95Modem_(RFM95_CS, RFM95_INT);
 MeshNode meshNode_(rfm95Modem_, selfAddress_);
@@ -91,15 +99,17 @@ void onMessage(const MeshNode::Message& msg, void*) {
 }
 
 void rhSetup() {
-  // Hardware reset so the modem starts clean after an ESP32-only reboot (e.g. watchdog).
-  pinMode(RFM95_RST, OUTPUT);
-  digitalWrite(RFM95_RST, LOW);
-  delay(10);
-  digitalWrite(RFM95_RST, HIGH);
-  delay(10);
+  resetRadio();
 
   if (!meshNode_.init()) Serial.println("init failed");
   rfm95Modem_.setTxPower(23, false);
   rfm95Modem_.setFrequency(RF95_FREQ);
   rfm95Modem_.setCADTimeout(500);
+#ifdef MODEM_CONFIG
+  // One of RH_RF95::ModemConfigChoice, e.g. -D MODEM_CONFIG=Bw125Cr48Sf4096.
+  rfm95Modem_.setModemConfig(RH_RF95::MODEM_CONFIG);
+#endif
+
+  meshNode_.setHopTimeout(HOP_TIMEOUT_MS);
+  meshNode_.setAckTimeout(ACK_TIMEOUT_MS);
 }

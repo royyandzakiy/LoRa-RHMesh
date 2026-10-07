@@ -1,6 +1,6 @@
 # Revival plan
 
-Turning this thesis snapshot into a working reference repo, in 4 PRs. Status: PR 1 done (`feat/meshnode-core`), **PR 2 in progress** (`feat/native-sim`, stacked on PR 1).
+Turning this thesis snapshot into a working reference repo, in 4 PRs. Status: PR 1 done (`feat/meshnode-core`), PR 2 done (`feat/native-sim`), **PR 3 in progress** (`feat/examples-ci`). Each branch is stacked on the previous one.
 
 ## Context
 The repo has stars and forks but is a frozen thesis snapshot. People use it as a small, readable RHMesh-on-ESP32 example. The goal is to keep it small but make it **correct, runnable without hardware, and checked by CI**:
@@ -72,6 +72,13 @@ Key finding: `RHRouter::_tmpMessage` is a **static** class member (`RHRouter.h:3
 - Unity aborts failed tests with `longjmp`, which skips destructors and leaves node threads running on freed memory. The `native` env sets `UNITY_EXCLUDE_SETJMP_H`.
 - The tests pass with or without the `_tmpMessage` patch. The race is real but the window is too small to hit; the patch stays as a correctness fix.
 - Two PlatformIO cores on one machine (`pio` on PATH 6.1.18, VS Code's 6.2.0) keep swapping SCons versions, and `-t exec` fails under the old one. Use one core.
+
+### Found while doing PR 3
+- **Long range never worked multi-hop:** `RH_MESH_ARP_TIMEOUT` is a fixed 4 s (with an upstream `FIXME`). At SF12 one frame takes about 3 s on air, so route discovery over 2 hops always timed out with "no route". It's now `#ifndef`-wrapped (in `PATCHES.md`) and raised by the `longrange-*` envs, together with the hop/ACK/watchdog timeouts.
+- Long range is a set of build flags on `src/main.cpp` (`MODEM_CONFIG`, `HOP_TIMEOUT_MS`, `ACK_TIMEOUT_MS`, `SEND_INTERVAL_MS`, `WDT_TIMEOUT_S`), not a copy of it. The longrange timeouts are calculated, not measured on hardware yet.
+- `test-2-mesh` is what `src/main.cpp` already does, so it has no example. `test-1` became `examples/02-static-routing` and `test-3` became `examples/01-range-test`. The four hand-written modem register sets match RadioHead's `ModemConfigChoice` presets, so the examples use those.
+- Shared pins, frequency and radio reset live in `lib/BoardConfig/BoardConfig.h`. `platformio.ini` has a `pin_flags` set per board.
+- CI builds every hardware env, reading the list from `platformio.ini`, plus the sim tests and demo.
 
 ## Critical files
 - `src/main.cpp` (rewrite to a thin shell)

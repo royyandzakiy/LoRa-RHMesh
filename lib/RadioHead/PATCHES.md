@@ -15,3 +15,8 @@ only one instance, so RAM use is unchanged.
 uninitialised. A driver in static storage is zeroed, so this only shows up for a
 driver on the stack or heap: it may start promiscuous, and RHRouter then forwards
 frames it only overheard, which breaks routing.
+
+## Configurable route discovery timeout
+`RH_MESH_ARP_TIMEOUT` (`RHMesh.h`) is wrapped in `#ifndef`, so a build flag can
+raise it. The fixed 4 s is too short for slow modem settings: at SF12 one frame
+takes 1-2 s on air, so multi-hop route discovery always ended in "no route".
