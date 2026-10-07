@@ -1,6 +1,6 @@
 # Revival plan
 
-Turning this thesis snapshot into a working reference repo, in 4 PRs. Status: all 4 PRs done, each branch stacked on the previous one: `feat/meshnode-core` → `feat/native-sim` → `feat/examples-ci` → `feat/docs`. Left to do: push the `v0-thesis` tag, merge in order, and test the `longrange-*` timeouts on hardware.
+Turning this thesis snapshot into a working reference repo, in 4 PRs. Status: all 4 PRs merged into `main`. Follow-up: the repo became an installable library (`feat/library`, see CHANGELOG.md). Left to do: test the long-range timeouts on hardware, and publish to the PlatformIO and Arduino registries.
 
 ## Context
 The repo has stars and forks but is a frozen thesis snapshot. People use it as a small, readable RHMesh-on-ESP32 example. The goal is to keep it small but make it **correct, runnable without hardware, and checked by CI**:

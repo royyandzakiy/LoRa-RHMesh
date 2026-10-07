@@ -1,14 +1,15 @@
 // Mesh behaviour on simulated radios. Each test builds its own ether and nodes.
-#include <SimNode.h>
+#include <LoRaRHMesh.h>
 #include <unity.h>
 
 #include <memory>
 #include <string>
 
-using Result = MeshNode::SendResult;
+using namespace rhmesh;
+using Result = Node::SendResult;
 
 static void assertResult(Result expected, Result actual) {
-  TEST_ASSERT_EQUAL_STRING(MeshNode::resultName(expected), MeshNode::resultName(actual));
+  TEST_ASSERT_EQUAL_STRING(Node::resultName(expected), Node::resultName(actual));
 }
 
 // 1 - 2 - 3 - 4, every node only hears its neighbours.
@@ -94,7 +95,7 @@ void test_no_ack_when_destination_dies() {
   assertResult(Result::Delivered, n1.send(4, "route warm-up"));
 
   ether.setPowered(4, false);
-  n1.run([](MeshNode& n) { n.setAckTimeout(1000); });
+  n1.run([](Node& n) { n.setAckTimeout(1000); });
 
   // Node 2 still ACKs the first hop, only the end-to-end ACK shows the message was lost.
   assertResult(Result::NoAck, n1.send(4, "lost"));
@@ -104,7 +105,7 @@ void test_max_payload_round_trips() {
   SimEther ether;
   SimNode a(ether, 1), b(ether, 2);
 
-  // 251 radio bytes - 5 router header - 1 mesh header - 2 MeshNode header.
+  // 251 radio bytes - 5 router header - 1 mesh header - 2 Node header.
   TEST_ASSERT_EQUAL(243, a.node().maxPayload());
 
   // Binary payload with zero bytes and no terminator must arrive intact.
@@ -126,16 +127,47 @@ void test_lossy_link_still_delivers() {
   ether.setDropRate(2, 3, 0.3);
   ether.setDropRate(3, 4, 0.3);
   SimNode n1(ether, 1), n2(ether, 2), n3(ether, 3), n4(ether, 4);
-  n1.run([](MeshNode& n) { n.setHopRetries(6); });
-  n2.run([](MeshNode& n) { n.setHopRetries(6); });
-  n3.run([](MeshNode& n) { n.setHopRetries(6); });
-  n4.run([](MeshNode& n) { n.setHopRetries(6); });
+  n1.run([](Node& n) { n.setHopRetries(6); });
+  n2.run([](Node& n) { n.setHopRetries(6); });
+  n3.run([](Node& n) { n.setHopRetries(6); });
+  n4.run([](Node& n) { n.setHopRetries(6); });
 
   int delivered = 0;
   for (int i = 0; i < 5; i++) {
     if (n1.send(4, "msg " + std::to_string(i)) == Result::Delivered) delivered++;
   }
   TEST_ASSERT_GREATER_OR_EQUAL(3, delivered);
+}
+
+void test_route_discovery_on_slow_link() {
+  // About SF12 timing: RadioHead's fixed 4 s discovery window ends before the reply
+  // makes it back over 2 hops, so only the route timeout retry finds the route.
+  SimEther ether(1500);
+  ether.link(1, 2);
+  ether.link(2, 3);
+  SimNode n1(ether, 1), n2(ether, 2), n3(ether, 3);
+  for (SimNode* n : {&n1, &n2, &n3}) {
+    n->run([](Node& node) {
+      node.setHopTimeout(4000);
+      node.setAckTimeout(30000);
+    });
+  }
+
+  assertResult(Result::NoRoute, n1.send(3, "single attempt"));
+
+  SimEther ether2(1500);
+  ether2.link(1, 2);
+  ether2.link(2, 3);
+  SimNode m1(ether2, 1), m2(ether2, 2), m3(ether2, 3);
+  for (SimNode* n : {&m1, &m2, &m3}) {
+    n->run([](Node& node) {
+      node.setHopTimeout(4000);
+      node.setAckTimeout(30000);
+      node.setRouteTimeout(30000);
+    });
+  }
+  assertResult(Result::Delivered, m1.send(3, "with route timeout"));
+  TEST_ASSERT_EQUAL(2, m1.nextHopTo(3));
 }
 
 int main() {
@@ -148,5 +180,6 @@ int main() {
   RUN_TEST(test_no_ack_when_destination_dies);
   RUN_TEST(test_max_payload_round_trips);
   RUN_TEST(test_lossy_link_still_delivers);
+  RUN_TEST(test_route_discovery_on_slow_link);
   return UNITY_END();
 }
